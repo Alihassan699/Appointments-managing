@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import '../styles/EditDel.css'; // Import your CSS file for styling
+import '../styles/EditDel.css'; 
 
 const EditDel = ({ isOpen, onClose, onSave, appointment }) => {
     const [formData, setFormData] = useState({

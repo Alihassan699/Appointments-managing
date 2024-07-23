@@ -30,7 +30,7 @@ export const getAppointments = async (req, res) => {
             query += ` WHERE ${conditions.join(' AND ')}`;
         }
 
-        query += ' ORDER BY date, time';
+        query += ' ORDER BY created_at DESC'; // Order by creation date descending
 
         const results = await pool.query(query, values);
         res.status(200).json(results.rows);
@@ -39,7 +39,6 @@ export const getAppointments = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 // Get a single appointment by ID
 export const getAppointmentById = async (req, res) => {
     const { id } = req.params;

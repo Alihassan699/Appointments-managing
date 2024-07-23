@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/AppointmentsTable.css'; 
 import EditDel from './EditDel'; 
-import Modal from 'react-modal';
 
 const AppointmentsTable = () => {
     const [appointments, setAppointments] = useState([]);
@@ -14,6 +13,10 @@ const AppointmentsTable = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    useEffect(() => {
+        fetchAppointments();
+    }, []);
+
     const fetchAppointments = async () => {
         setLoading(true);
         try {
@@ -22,7 +25,7 @@ const AppointmentsTable = () => {
                 throw new Error('Network response was not ok');
             }
             const data = await response.json();
-            setAppointments(data);
+            setAppointments(data.sort((a, b) => b.id - a.id)); 
         } catch (error) {
             setError(error.message);
         } finally {
@@ -30,28 +33,16 @@ const AppointmentsTable = () => {
         }
     };
 
-    useEffect(() => {
-        fetchAppointments();
-    }, []);
-
     const handleEdit = (appointment) => {
         setSelectedAppointment(appointment);
         setModalMode('edit');
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (appointment) => {
-        try {
-            const response = await fetch(`http://localhost:5000/api/appointments/${appointment.id}`, {
-                method: 'DELETE',
-            });
-            if (!response.ok) {
-                throw new Error('Failed to delete appointment');
-            }
-            await fetchAppointments(); // Refetch appointments after deletion
-        } catch (error) {
-            console.error('Error deleting appointment:', error);
-        }
+    const handleDelete = (appointment) => {
+        setSelectedAppointment(appointment);
+        setModalMode('delete');
+        setIsModalOpen(true);
     };
 
     const handleCloseModal = () => {
@@ -61,12 +52,12 @@ const AppointmentsTable = () => {
 
     const handleSave = async (formData) => {
         const { id, customerName, providerName, service, date, time, status } = formData;
-    
+
         if (!customerName || !providerName || !service || !date || !time || !status) {
             console.error('All fields are required');
             return;
         }
-    
+
         if (modalMode === 'edit') {
             try {
                 const response = await fetch(`http://localhost:5000/api/appointments/${id}`, {
@@ -79,9 +70,23 @@ const AppointmentsTable = () => {
                 if (!response.ok) {
                     throw new Error('Failed to update appointment');
                 }
-                await fetchAppointments(); // Refetch appointments after update
+                // Refetch appointments
+                await fetchAppointments();
             } catch (error) {
                 console.error('Error updating appointment:', error);
+            }
+        } else if (modalMode === 'delete') {
+            try {
+                const response = await fetch(`http://localhost:5000/api/appointments/${selectedAppointment.id}`, {
+                    method: 'DELETE',
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to delete appointment');
+                }
+                // Refetch appointments
+                await fetchAppointments();
+            } catch (error) {
+                console.error('Error deleting appointment:', error);
             }
         }
         handleCloseModal();
@@ -185,7 +190,6 @@ const AppointmentsTable = () => {
                     onClose={handleCloseModal}
                     onSave={handleSave}
                     appointment={selectedAppointment}
-                    mode={modalMode}
                 />
             )}
         </div>
